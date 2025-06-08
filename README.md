@@ -74,17 +74,17 @@ docker-compose up --build
 ```
 multi-modal-sample/
 ├── app/                    # アプリケーションのメインコード
-│   ├── __init__.py        # Pythonパッケージ定義
-│   ├── config.py          # 設定ファイル（APIキー、DB設定など）
-│   ├── Dockerfile         # アプリケーション用Dockerfile
-│   ├── main.py            # アプリケーションのエントリーポイント
-│   ├── pyproject.toml     # Pythonプロジェクト設定
-│   ├── ui.py              # Streamlit UIの実装
-│   └── utils.py           # ユーティリティ関数（PDF処理、画像処理など）
-├── docker-compose.yml     # Docker Compose設定
-├── .env                   # 環境変数設定（要作成）
-├── .gitignore            # Git除外設定
-└── README.md             # プロジェクトドキュメント
+│   ├── __init__.py         # Pythonパッケージ定義
+│   ├── config.py           # 設定ファイル（APIキー、DB設定など）
+│   ├── Dockerfile          # アプリケーション用Dockerfile
+│   ├── main.py             # アプリケーションのエントリーポイント
+│   ├── pyproject.toml      # Pythonプロジェクト設定
+│   ├── ui.py               # Streamlit UIの実装
+│   └── utils.py            # ユーティリティ関数（PDF処理、画像処理など）
+│   └── .env                # 環境変数（.env.templateよりコピーして使用）
+├── docker-compose.yml      # Docker Compose設定
+├── .gitignore              # Git除外設定
+└── README.md               # プロジェクトドキュメント
 ```
 
 ### 主要コンポーネント
@@ -94,12 +94,4 @@ multi-modal-sample/
 - `app/utils.py`: PDFファイルの処理、画像抽出、テキスト変換などのユーティリティ関数
 - `app/main.py`: アプリケーションのメインエントリーポイント
 - `docker-compose.yml`: PostgreSQLとpgvectorを含む開発環境の設定
-
-
-
-
-
-
-
-
 
