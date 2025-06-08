@@ -41,6 +41,7 @@ build/
 *.log
 *.sqlite
 *.db
+pgdata/
 
 # Docker
 .docker/

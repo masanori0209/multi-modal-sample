@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 def render_settings():
     with st.sidebar:
         st.header("⚙️ 設定")
+        # セッションのリセットボタン
+        if st.button("セッションのリセット"):
+            st.session_state.clear()
+            st.rerun()
         st.text_input(
             "OpenAI API Key",
             type="password",
@@ -31,6 +35,9 @@ def render_settings():
             placeholder="例: テーブル形式で出力してください",
             value=system_prompt
         )
+        # APIキーが変更されたら、APIキーを更新
+        if st.session_state.get("OPENAI_API_KEY") != os.getenv("OPENAI_API_KEY"):
+            os.environ["OPENAI_API_KEY"] = st.session_state.get("OPENAI_API_KEY")
 
 # ファイルアップロード処理
 def handle_file_upload(uploaded_file):
@@ -69,7 +76,7 @@ def handle_file_upload(uploaded_file):
         st.session_state.file_processed = True
 
 # 質問処理
-def handle_question(query, uploaded_file):
+def handle_question(query):
     # agentのシステムプロンプトを取得
     __system_prompt = st.session_state.get("system_prompt", system_prompt)
     # システムプロンプトを割り当て

@@ -1,12 +1,11 @@
 import pdfplumber
 from langchain_openai import ChatOpenAI
 from pdf2image import convert_from_path
-import os
+import streamlit as st
 import tempfile
 import io
 import base64
 import logging
-from config import custom_prompt, system_prompt
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -36,7 +35,7 @@ def convert_image_to_text(image):
         "content": [
             {
                 "type": "text",
-                "text": custom_prompt
+                "text": st.session_state.custom_prompt
             },
             {
                 "type": "image_url",

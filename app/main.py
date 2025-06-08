@@ -14,4 +14,4 @@ handle_file_upload(uploaded_file)
 # 質問フォーム
 query = st.text_input("質問を入力してください")
 if st.button("質問する") and query:
-    handle_question(query, uploaded_file)
+    handle_question(query)

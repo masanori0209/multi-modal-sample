@@ -53,14 +53,15 @@ tool = QueryEngineTool.from_defaults(
     description="PostgreSQLベースのドキュメント検索エンジン"
 )
 
+custom_prompt = os.getenv("CUSTOM_PROMPT", "画像から項目とデータに分けて出力してください")
+system_prompt = os.getenv("SYSTEM_PROMPT", "ドキュメント検索エンジンからデータを取得して回答してください")
+
 # エージェント作成
 agent = OpenAIAgent.from_tools(
     tools=[tool],
-    system_prompt=os.getenv("SYSTEM_PROMPT", "表形式で回答してください"),
+    system_prompt=system_prompt,
     verbose=True,
 )
 
 logger.info("Agent 構築完了")
 
-custom_prompt = os.getenv("CUSTOM_PROMPT", "画像から項目とデータに分けて出力してください")
-system_prompt = os.getenv("SYSTEM_PROMPT", "テーブル形式で出力してください")
