@@ -8,7 +8,10 @@ st.title("マルチモーダル サンプル")
 render_settings()
 
 # ファイルアップロードUI
-uploaded_file = st.file_uploader("PDFファイルをアップロードしてください", type=["pdf"])
+uploaded_file = st.file_uploader(
+    "ファイルをアップロードしてください",
+    type=["pdf", "xlsx", "xls", "docx", "doc", "png", "jpg", "jpeg"]
+)
 handle_file_upload(uploaded_file)
 
 # 質問フォーム

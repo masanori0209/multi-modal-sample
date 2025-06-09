@@ -4,19 +4,41 @@ import tempfile
 import time
 import os
 from llama_index.core import Document
-from utils import extract_text_from_pdf, convert_pdf_to_images, convert_image_to_text
+from utils import process_file
 from config import index, agent, custom_prompt, system_prompt
+from db import get_database_size, get_table_info, clear_vector_store
 import logging
 logger = logging.getLogger(__name__)
 
 # 設定処理
 def render_settings():
     with st.sidebar:
-        st.header("⚙️ 設定")
+        # データベース情報
+        st.subheader("📊 データベース情報")
+        db_size = get_database_size()
+        st.metric("データベースサイズ", db_size)
+        # テーブル一覧
+        st.subheader("📋 テーブル一覧")
+        tables = get_table_info()
+        if tables:
+            for table in tables:
+                st.text(f"• {table['name']} ({table['size']})")
+        else:
+            st.info("テーブルが存在しません")
         # セッションのリセットボタン
         if st.button("セッションのリセット"):
             st.session_state.clear()
             st.rerun()
+        # ベクトルストアのクリアボタン
+        if st.button("ベクトルストアのデータをクリア"):
+            try:
+                clear_vector_store()
+                st.success("✅ ベクトルストアのデータを削除しました")
+                # データベース情報を更新
+                st.rerun()
+            except Exception as e:
+                st.error(f"❌ エラーが発生しました: {str(e)}")
+        st.header("⚙️ 設定")
         st.text_input(
             "OpenAI API Key",
             type="password",
@@ -41,36 +63,47 @@ def render_settings():
 
 # ファイルアップロード処理
 def handle_file_upload(uploaded_file):
-    if uploaded_file and "file_processed" not in st.session_state:
-        st.session_state.file_processed = False
+    # 新しいファイルがアップロードされた場合、前回の処理状態をリセット
+    if uploaded_file and "current_file_name" in st.session_state:
+        if st.session_state.current_file_name != uploaded_file.name:
+            st.session_state.file_processed = False
+            # 前回の一時ファイルを削除
+            if "tmpfile_path" in st.session_state:
+                try:
+                    os.remove(st.session_state.tmpfile_path)
+                except Exception as e:
+                    logger.error(f"一時ファイルの削除中にエラーが発生: {e}")
+    # 現在のファイル名を保存
+    if uploaded_file:
+        st.session_state.current_file_name = uploaded_file.name
 
-    if uploaded_file and not st.session_state.file_processed:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+    if uploaded_file and not st.session_state.get("file_processed", False):
+        with tempfile.NamedTemporaryFile(delete=False) as tmpfile:
             tmpfile.write(uploaded_file.read())
             tmpfile_path = tmpfile.name
             st.session_state.tmpfile_path = tmpfile_path
 
         status_message = st.empty()
-        status_message.success("✅ PDFアップロード完了。インデックス登録中...")
+        status_message.success("✅ ファイルアップロード完了。インデックス登録中...")
         time.sleep(1)
 
-        text = extract_text_from_pdf(tmpfile_path)
-        if text.strip():
-            doc = Document(text=text, metadata={"filename": uploaded_file.name})
-            index.insert(doc)
-            status_message.success("✅ インデックス登録完了")
-        else:
-            images = convert_pdf_to_images(tmpfile_path)
-            logger.info(f"✅ 画像抽出完了 : 画像は{len(images)}枚です。")
-            for image in images:
-                doc = Document(text=convert_image_to_text(image), metadata={"filename": uploaded_file.name})
+        try:
+            text = process_file(tmpfile_path)
+            if text.strip():
+                doc = Document(text=text, metadata={"filename": uploaded_file.name})
                 index.insert(doc)
-                logger.info(f"✅ インデックス登録処理中 : 要約 => {doc.text[:500]}")
-            if images:
-                status_message.success(f"✅ インデックス登録完了 : 内容は{len(images)}枚の画像です。")
+                status_message.success("✅ インデックス登録完了")
             else:
                 status_message.warning("⚠️ テキストが抽出できませんでした。")
-
+        except Exception as e:
+            status_message.error(f"❌ エラーが発生しました: {str(e)}")
+            logger.error(f"ファイル処理中にエラーが発生: {e}")
+        finally:
+            # 一時ファイルを削除
+            try:
+                os.remove(tmpfile_path)
+            except Exception as e:
+                logger.error(f"一時ファイルの削除中にエラーが発生: {e}")
         time.sleep(3)
         status_message.empty()
         st.session_state.file_processed = True

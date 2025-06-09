@@ -8,21 +8,13 @@ from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.llms.openai import OpenAI
 from llama_index.core.tools import QueryEngineTool
 from llama_index.vector_stores.postgres import PGVectorStore
+from db import db_params, table_name, get_database_size, get_table_info, clear_vector_store
 
 # 環境変数読み込み
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# DB設定
-db_params = {
-    "host": os.getenv("PG_HOST", "localhost"),
-    "port": int(os.getenv("PG_PORT", 5432)),
-    "database": os.getenv("PG_DATABASE", "ragdb"),
-    "user": os.getenv("PG_USER", "raguser"),
-    "password": os.getenv("PG_PASSWORD", "ragpass"),
-}
-table_name = "documents"
 logger.info("DB設定完了")
 
 # LLM設定（LlamaIndex用 OpenAIラッパー）
@@ -36,6 +28,7 @@ vector_store = PGVectorStore.from_params(
     table_name=table_name,
     embed_dim=1536,
 )
+
 storage_context = StorageContext.from_defaults(vector_store=vector_store)
 index = VectorStoreIndex.from_vector_store(
     vector_store=vector_store,

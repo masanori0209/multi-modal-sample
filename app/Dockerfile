@@ -6,6 +6,7 @@ RUN apt-get update && \
     poppler-utils \
     libgl1 \
     build-essential \
+    libmagic1 \
     && apt-get clean
 ENV PYTHONPATH=/app
 
