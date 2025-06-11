@@ -111,7 +111,7 @@ def convert_pdf_to_images(pdf_path):
         images = convert_from_path(pdf_path, output_folder=path, fmt='jpeg', dpi=200)
         return images
 
-def convert_image_to_text(image):
+def convert_image_to_text(image, model_name="gpt-4o-mini"):
     # Convert PIL Image to base64
     buf = io.BytesIO()
     image.save(buf, format="JPEG")
@@ -139,7 +139,7 @@ def convert_image_to_text(image):
     logger.info(f"✅ 画像からテキストを抽出完了 : 回答 => {response.content[:100]}")
     return response.content
 
-def process_file(file_path):
+def process_file(file_path, model_name="gpt-4o-mini"):
     """ファイルの種類に応じて適切な処理を行う"""
     file_type = get_file_type(file_path)
     if file_type == 'application/pdf':

@@ -5,9 +5,11 @@ import time
 import os
 from llama_index.core import Document
 from utils import process_file
-from config import index, agent, custom_prompt, system_prompt
+from config import index, agent, custom_prompt, system_prompt, get_llm_and_agent
 from db import get_database_size, get_table_info, clear_vector_store
 import logging
+from constants.models import GPT_MODELS
+
 logger = logging.getLogger(__name__)
 
 # 設定処理
@@ -39,6 +41,13 @@ def render_settings():
             except Exception as e:
                 st.error(f"❌ エラーが発生しました: {str(e)}")
         st.header("⚙️ 設定")
+        # モデル選択ドロップダウン
+        st.selectbox(
+            "モデル選択",
+            GPT_MODELS,
+            key="selected_model",
+            index=GPT_MODELS.index(st.session_state.get("selected_model", GPT_MODELS[0])) if st.session_state.get("selected_model") in GPT_MODELS else 0
+        )
         st.text_input(
             "OpenAI API Key",
             type="password",
@@ -88,7 +97,7 @@ def handle_file_upload(uploaded_file):
         time.sleep(1)
 
         try:
-            text = process_file(tmpfile_path)
+            text = process_file(tmpfile_path, model_name=st.session_state.get("selected_model", "gpt-4o-mini"))
             if text.strip():
                 doc = Document(text=text, metadata={"filename": uploaded_file.name})
                 index.insert(doc)
@@ -112,11 +121,13 @@ def handle_file_upload(uploaded_file):
 def handle_question(query):
     # agentのシステムプロンプトを取得
     __system_prompt = st.session_state.get("system_prompt", system_prompt)
-    # システムプロンプトを割り当て
-    agent.system_prompt = __system_prompt
+    # 選択されたモデル名を取得
+    selected_model = st.session_state.get("selected_model", "gpt-4o-mini")
+    # モデルとエージェントを動的に生成
+    _, dynamic_agent = get_llm_and_agent(model_name=selected_model, sys_prompt=__system_prompt)
     with st.spinner("回答中..."):
         # Agentを使って会話
-        response = agent.chat(query)
+        response = dynamic_agent.chat(query)
     st.markdown("### GPTの回答")
     st.write(response.response)
     logger.info(f"✅ GPTの回答完了 : 回答 => {response.response}")

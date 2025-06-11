@@ -17,11 +17,6 @@ logger = logging.getLogger(__name__)
 
 logger.info("DB設定完了")
 
-# LLM設定（LlamaIndex用 OpenAIラッパー）
-llm = OpenAI(model="gpt-4o-mini", temperature=0)
-Settings.llm = llm
-Settings.embed_model = OpenAIEmbedding(model="text-embedding-3-small")
-
 # ベクトルストアとインデックス構築
 vector_store = PGVectorStore.from_params(
     **db_params,
@@ -49,12 +44,24 @@ tool = QueryEngineTool.from_defaults(
 custom_prompt = os.getenv("CUSTOM_PROMPT", "画像から項目とデータに分けて出力してください")
 system_prompt = os.getenv("SYSTEM_PROMPT", "ドキュメント検索エンジンからデータを取得して回答してください")
 
-# エージェント作成
-agent = OpenAIAgent.from_tools(
-    tools=[tool],
-    system_prompt=system_prompt,
-    verbose=True,
-)
+# LLMとAgentを動的に生成する関数
+def get_llm_and_agent(model_name=None, sys_prompt=None):
+    if model_name is None:
+        model_name = "gpt-4o-mini"
+    if sys_prompt is None:
+        sys_prompt = system_prompt
+    llm = OpenAI(model=model_name, temperature=0)
+    Settings.llm = llm
+    Settings.embed_model = OpenAIEmbedding(model="text-embedding-3-small")
+    agent = OpenAIAgent.from_tools(
+        tools=[tool],
+        system_prompt=sys_prompt,
+        verbose=True,
+    )
+    return llm, agent
+
+# デフォルトのllm/agent
+llm, agent = get_llm_and_agent()
 
 logger.info("Agent 構築完了")
 
